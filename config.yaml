@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    foo: bar
+spec:
+  volumes:
+    - name: taxi-storage
+      persistentVolumeClaim:
+       claimName: nfs
+  containers:
+    - name: dask
+      image: nvcr.io/nvidia/rapidsai/rapidsai:0.7-cuda10.0-runtime-ubuntu16.04-gcc5-py3.7
+      imagePullPolicy: IfNotPresent
+      command: ['/bin/bash', "-c"]
+      args: ["source activate rapids && dask-worker --nthreads 1 --memory-limit=64e9 --death-timeout '60'"]
+      env:
+        - name: EXTRA_PIP_PACKAGES
+          value: fastparquet git+https://github.com/dask/distributed
+      resources:
+        limits:
+          cpu: "2"
+          memory: 64G
+          nvidia.com/gpu: 1
+        requests:
+          cpu: "2"
+          memory: 64G
+          nvidia.com/gpu: 1
+      volumeMounts:
+        - mountPath: "/home/jovyan/nyc-taxi-data"
+          name: taxi-storage
